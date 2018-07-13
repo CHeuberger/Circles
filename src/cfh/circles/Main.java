@@ -36,12 +36,20 @@ public class Main {
         
         input = new double[2*N];
         
-        // Circle
+//        // Circle
+//        int j = 0;
+//        for (int i = 0; i < N; i++) {
+//            double a = toRadians(i * 360.0 / N);
+//            input[j++] = cos(a);
+//            input[j++] = sin(a);
+//        }
+        
+        // 3 Circles
         int j = 0;
         for (int i = 0; i < N; i++) {
             double a = toRadians(i * 360.0 / N);
-            input[j++] = cos(a);
-            input[j++] = sin(a);
+            input[j++] = cos(a) + cos(2*a)/2 + cos(3*a)/3;
+            input[j++] = sin(a) + sin(2*a)/2 + sin(3*a)/3;
         }
         
 //        // Square
@@ -73,8 +81,8 @@ public class Main {
             double x = result[2*i+0];
             double y = result[2*i+1];
             data[i][0] = sqrt(x*x + y*y);
-            data[1][1] = atan2(y, x);
-            System.out.printf("%f < %f%n", data[i][0], data[i][1]);
+            data[i][1] = atan2(y, x);
+            System.out.printf("%7.2f,%7.2f   %7.2f < %7.2f%n", x, y, data[i][0], data[i][1]);
         }
         
         SwingUtilities.invokeLater(this::initGUI);
@@ -86,7 +94,7 @@ public class Main {
         frame = new JFrame("Circles");
         frame.add(circles);
         frame.setDefaultCloseOperation(frame.DISPOSE_ON_CLOSE);
-        frame.setSize(800, 800);
+        frame.setSize(1000, 800);
         frame.setResizable(false);
         frame.validate();
         frame.setLocationRelativeTo(null);
