@@ -1,7 +1,5 @@
 package cfh.circles;
 
-import static java.lang.Math.*;
-
 import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Graphics;
@@ -9,10 +7,7 @@ import java.awt.Graphics2D;
 import java.awt.geom.Line2D;
 import java.awt.geom.Point2D;
 import java.util.Arrays;
-import java.util.stream.IntStream;
-
 import javax.swing.JFrame;
-import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 
 import org.jtransforms.fft.DoubleFFT_1D;
@@ -29,21 +24,34 @@ public class TestSquare {
         ConcurrencyUtils.setNumberOfThreads(2);
         
         double[] input = new double[2*N];
-        for (int i = 0; i < N; i++) {
-            double a = toRadians(i * 360.0 / N);
-            input[2*i] = cos(5*a);
-            input[2*i+1] = sin(5*a);
+        final int seg = N / 4;
+        int j = 0;
+        for (int i = 0; i < seg; i++) {
+            input[j++] = (double) i / seg;
+            input[j++] = 0.0;
+        }
+        for (int i = 0; i < seg; i++) {
+            input[j++] = 1.0;
+            input[j++] = (double) i / seg;
+        }
+        for (int i = 0; i < seg; i++) {
+            input[j++] = (double) (seg-i-1) / seg;
+            input[j++] = 1.0;
+        }
+        for (int i = 0; i < seg; i++) {
+            input[j++] = 0.0;
+            input[j++] = (double) (seg-i-1) / seg;
         }
         
         DoubleFFT_1D fft = new DoubleFFT_1D(N);
         double[] x = Arrays.copyOf(input, 2*N);
         fft.complexForward(x);
-        double[] result = Arrays.copyOf(x, 2*N);
+        double[] result = x;
         
         JFrame frame = new JFrame();
         frame.setDefaultCloseOperation(frame.DISPOSE_ON_CLOSE);
         frame.setSize(600, 600);
-        frame.add(new Graph(100, input, result));
+        frame.add(new Graph(100, -100, input, result));
         frame.validate();
         frame.setLocationRelativeTo(null);
         frame.setVisible(true);
@@ -51,12 +59,14 @@ public class TestSquare {
     
     private static class Graph extends JPanel {
         
+        private final double hscale;
         private final double vscale;
         private final double[] input;
         private final double[] result;
         
-        private Graph(double vscale, double[] input, double[] result) {
-            this.vscale = -vscale;
+        private Graph(double hscale, double vscale, double[] input, double[] result) {
+            this.hscale = hscale;
+            this.vscale = vscale;
             this.input = input;
             this.result = result;
         }
@@ -65,44 +75,27 @@ public class TestSquare {
         protected void paintComponent(Graphics g) {
             super.paintComponent(g);
             
-            double hscale;
             Graphics2D gg = (Graphics2D) g;
-            gg.translate(0, getHeight()/2);
+            gg.translate(getWidth()/2, getHeight()/2);
             Line2D line = new Line2D.Double();
 
             gg.setColor(Color.GRAY);
-            hscale = (double) getWidth() / input.length;
-            for (int i = 0; i < input.length; i++) {
-                Point2D p = new Point2D.Double(i*hscale, input[i]*vscale);
+            for (int i = 0; i < N; i++) {
+                Point2D p = new Point2D.Double(input[2*i+0]*hscale, input[2*i+1]*vscale);
                 line.setLine(line.getP2(), p);
                 if (i > 0) {
                     gg.draw(line);
                 }
             }
-
+            
             if (result != null) {
                 gg.setColor(new Color(0, 0, 255, 100));
                 gg.setStroke(new BasicStroke(3));
-                hscale = (double) getWidth() / N;
                 for (int i = 0; i < N; i++) {
-                    if (result[i] < -0.1 || result[i] > 0.1) System.out.printf("%4d %f%n", i, result[i]);
-                    Point2D p = new Point2D.Double(i*hscale, -result[i]-1);
+                    Point2D p = new Point2D.Double(result[2*i+0], result[2*i+1]);
                     line.setLine(line.getP2(), p);
                     if (i > 0) {
                         gg.draw(line);
-                    }
-                }
-
-                if (result.length > N) {
-                    gg.setColor(new Color(255, 0, 0, 100));
-                    gg.setStroke(new BasicStroke(3));
-                    for (int i = N; i < result.length; i++) {
-                        if (result[i] < -0.1 || result[i] > 0.1) System.out.printf("%4d %f%n", i, result[i]);
-                        Point2D p = new Point2D.Double((i-N)*hscale, -result[i]+1);
-                        line.setLine(line.getP2(), p);
-                        if (i > N) {
-                            gg.draw(line);
-                        }
                     }
                 }
             }

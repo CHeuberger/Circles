@@ -17,15 +17,17 @@ import javax.swing.Timer;
 
 public class CirclesPanel extends JPanel {
 
-    private static Color AXIS_COLOR = new Color(0, 0, 255, 50);
-    private static Color CIRCLE_COLOR = new Color(100, 100, 100, 100);
-    private static Color RADIUS_COLOR = new Color(100, 100, 100, 100);
-    private static Color CURVE_COLOR = Color.BLACK;
+    private static final Color INPUT_COLOR = new Color(0, 255, 0, 100);
+    private static final Color AXIS_COLOR = new Color(0, 0, 255, 50);
+    private static final Color CIRCLE_COLOR = new Color(100, 100, 100, 100);
+    private static final Color RADIUS_COLOR = new Color(0, 0, 0, 200);
+    private static final Color CURVE_COLOR = Color.BLACK;
     
-    private static int delay = 17;
+    private static int delay = 10;
     private static double increment = PI/90;
     
-    private double[][] circles;
+    private final double[] input;
+    private final double[][] circles;
     
     private Timer timer = null;
     private double angle = 0;
@@ -33,7 +35,8 @@ public class CirclesPanel extends JPanel {
     private BufferedImage curve;
     private Graphics2D curveGraphics;
     
-    CirclesPanel(double[][] circles) {
+    CirclesPanel(double[] input, double[][] circles) {
+        this.input = input;
         this.circles = circles;
     }
 
@@ -49,6 +52,10 @@ public class CirclesPanel extends JPanel {
             curve = new BufferedImage(getWidth(), getHeight(), BufferedImage.TYPE_INT_ARGB);
             curveGraphics = curve.createGraphics();
             curveGraphics.translate(hw, hh);
+            curveGraphics.setStroke(new BasicStroke(3f));
+            if (input != null) {
+                drawInput(curveGraphics);
+            }
             curveGraphics.setStroke(new BasicStroke(3f));
             timer = new Timer(delay, this::animate);
             timer.start();
@@ -86,6 +93,20 @@ public class CirclesPanel extends JPanel {
             curveGraphics.draw(new Line2D.Double(prev, actual));
         }
         prev = actual;
+    }
+
+    private void drawInput(Graphics2D gg) {
+        gg.setColor(INPUT_COLOR);
+        int n = input.length / 2;
+        Line2D line = new Line2D.Double();
+
+        for (int i = 0; i < n; i++) {
+            Point2D p = new Point2D.Double(input[2*i+0]*n, input[2*i+1]*n);
+            line.setLine(line.getP2(), p);
+            if (i > 0) {
+                gg.draw(line);
+            }
+        }
     }
     
     private void animate(ActionEvent ev) {
