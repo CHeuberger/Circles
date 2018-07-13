@@ -17,7 +17,7 @@ public class Main {
     
     
     private static final int N = 256;
-    private static final int COUNT = 4;
+    private static final int COUNT = 8;
     
     private double[] input;
     private double[][] data;
@@ -56,20 +56,20 @@ public class Main {
 //        final int seg = N / 4;
 //        int j = 0;
 //        for (int i = 0; i < seg; i++) {
-//            input[j++] = (double) i / seg;
-//            input[j++] = 0.0;
+//            input[j++] = (double) i / seg - 0.5;
+//            input[j++] = -0.5;
 //        }
 //        for (int i = 0; i < seg; i++) {
-//            input[j++] = 1.0;
-//            input[j++] = (double) i / seg;
+//            input[j++] = 0.5;
+//            input[j++] = (double) i / seg - 0.5;
 //        }
 //        for (int i = 0; i < seg; i++) {
-//            input[j++] = (double) (seg-i-1) / seg;
-//            input[j++] = 1.0;
+//            input[j++] = 0.5 - (double) (i) / seg;
+//            input[j++] = 0.5;
 //        }
 //        for (int i = 0; i < seg; i++) {
-//            input[j++] = 0.0;
-//            input[j++] = (double) (seg-i-1) / seg;
+//            input[j++] = -0.5;
+//            input[j++] = 0.5 - (double) (i) / seg;
 //        }
         
         DoubleFFT_1D fft = new DoubleFFT_1D(N);
@@ -94,7 +94,7 @@ public class Main {
         frame = new JFrame("Circles");
         frame.add(circles);
         frame.setDefaultCloseOperation(frame.DISPOSE_ON_CLOSE);
-        frame.setSize(1000, 800);
+        frame.setSize(1000, 1000);
         frame.setResizable(false);
         frame.validate();
         frame.setLocationRelativeTo(null);

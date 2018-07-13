@@ -7,13 +7,19 @@ import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.event.ActionEvent;
+import java.awt.event.KeyEvent;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.Line2D;
 import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
 
+import javax.swing.AbstractAction;
+import javax.swing.ActionMap;
+import javax.swing.InputMap;
 import javax.swing.JPanel;
+import javax.swing.KeyStroke;
 import javax.swing.Timer;
+
 
 public class CirclesPanel extends JPanel {
 
@@ -23,8 +29,12 @@ public class CirclesPanel extends JPanel {
     private static final Color RADIUS_COLOR = new Color(0, 0, 0, 200);
     private static final Color CURVE_COLOR = Color.BLACK;
     
-    private static int delay = 10;
-    private static double increment = PI/90;
+    private static final String ACTION_START_STOP = "CirclesStartStop";
+    private static final String ACTION_STEP = "CirclesStep";
+    private static final String ACTION_CLEAR = "CircleClear";
+    
+    private static final int delay = 10;
+    private static double increment = PI/180;
     
     private final double[] input;
     private final double[][] circles;
@@ -38,6 +48,57 @@ public class CirclesPanel extends JPanel {
     CirclesPanel(double[] input, double[][] circles) {
         this.input = input;
         this.circles = circles;
+       
+        setFocusable(true);
+        ActionMap am = getActionMap();
+        InputMap im = getInputMap(WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
+        am.put(ACTION_START_STOP, new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                doStartStop();
+            }
+        });
+        am.put(ACTION_STEP, new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                doStep();
+            }
+        });
+        am.put(ACTION_CLEAR, new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                doClear();
+            }
+        });
+        im.put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), ACTION_START_STOP);
+        im.put(KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0), ACTION_STEP);
+        im.put(KeyStroke.getKeyStroke(KeyEvent.VK_BACK_SPACE, 0), ACTION_CLEAR);
+    }
+    
+    private void doStartStop() {
+        if (timer.isRunning()) {
+            timer.stop();
+        } else {
+            timer.start();
+        }
+    }
+    
+    private void doStep() {
+        if (timer.isRunning()) {
+            timer.stop();
+        } else {
+            animate(null);
+        }
+    }
+    
+    private void doClear() {
+        int hw = getWidth()/2;
+        int hh = getHeight()/2;
+        curveGraphics.clearRect(-hw, -hh, hw+hw, hh+hh);
+        if (input != null) {
+            drawInput(curveGraphics);
+        }
+        repaint();
     }
 
     @Override
@@ -51,6 +112,7 @@ public class CirclesPanel extends JPanel {
             angle = 0;
             curve = new BufferedImage(getWidth(), getHeight(), BufferedImage.TYPE_INT_ARGB);
             curveGraphics = curve.createGraphics();
+            curveGraphics.setBackground(new Color(0, 0, 0, 0));
             curveGraphics.translate(hw, hh);
             curveGraphics.setStroke(new BasicStroke(3f));
             if (input != null) {
