@@ -36,6 +36,7 @@ public class CirclesPanel extends JPanel {
     private static final int delay = 10;
     private static double increment = PI/180;
     
+    private double scale;
     private final double[] input;
     private final double[][] circles;
     
@@ -45,7 +46,8 @@ public class CirclesPanel extends JPanel {
     private BufferedImage curve;
     private Graphics2D curveGraphics;
     
-    CirclesPanel(double[] input, double[][] circles) {
+    CirclesPanel(double scale, double[] input, double[][] circles) {
+        this.scale = scale;
         this.input = input;
         this.circles = circles;
        
@@ -131,13 +133,13 @@ public class CirclesPanel extends JPanel {
         gg.drawLine(-hw, 0, hw, 0);
         gg.drawLine(0, -hh, 0, hh);
         
-        double r = circles[0][0];
+        double r = circles[0][0] * scale;
         double a = circles[0][1];
         double cx = r * cos(a);
         double cy = r * sin(a);
         
         for (int i = 1; i < circles.length; i++) {
-            r = circles[i][0];
+            r = circles[i][0] * scale;
             a = circles[i][1] + i * angle;
             gg.setColor(CIRCLE_COLOR);
             gg.draw(new Ellipse2D.Double(cx-r, cy-r, r+r, r+r));
@@ -163,7 +165,7 @@ public class CirclesPanel extends JPanel {
         Line2D line = new Line2D.Double();
 
         for (int i = 0; i < n; i++) {
-            Point2D p = new Point2D.Double(input[2*i+0]*n, input[2*i+1]*n);
+            Point2D p = new Point2D.Double(input[2*i+0]*scale, input[2*i+1]*scale);
             line.setLine(line.getP2(), p);
             if (i > 0) {
                 gg.draw(line);
