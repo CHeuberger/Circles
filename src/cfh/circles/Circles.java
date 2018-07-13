@@ -26,11 +26,12 @@ public class Circles {
             data[2*i+0] = r[0]*cos(a+p[0]) + r[1]*cos(2*a+p[1]) + r[2]*cos(3*a+p[2]);
             data[2*i+1] = r[0]*sin(a+p[0]) + r[1]*sin(2*a+p[1]) + r[2]*sin(3*a+p[2]);
         }
-        new Circles(data, COUNT, SIZE);
+        new Circles(data, COUNT, SIZE, SIZE/4);
     }
     
     
     private final int size;
+    private final double scale;
     private final double[] input;
     private final double[][] circles;
     
@@ -38,8 +39,9 @@ public class Circles {
     private CirclesPanel panel;
     
     
-    private Circles(double[] input, int count, int size) {
+    Circles(double[] input, int count, int size, double scale) {
         this.size = size;
+        this.scale = scale;
         this.input = input;
         int n = input.length / 2;
         
@@ -60,7 +62,7 @@ public class Circles {
     }
     
     private void initGUI() {
-        panel = new CirclesPanel(size/4, input, circles);
+        panel = new CirclesPanel(scale, input, circles);
         
         frame = new JFrame("Circles");
         frame.add(panel);
