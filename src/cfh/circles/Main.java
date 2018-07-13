@@ -20,10 +20,10 @@ public class Main {
     
     private void initGUI() {
         circles = new CirclesPanel(new double[][] {
-            {100.0,  1.60},
-            {100.0,  0.80},
+            {  0.0,  0.00},
+            {100.0,  0.00},
             { 50.0,  0.00},
-            { 30.0,  0.00},
+            { 50.0,  1.57},
         });
         
         frame = new JFrame("Circles");

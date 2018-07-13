@@ -2,12 +2,15 @@ package cfh.circles;
 
 import static java.lang.Math.*;
 
+import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.event.ActionEvent;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.Line2D;
+import java.awt.geom.Point2D;
+import java.awt.image.BufferedImage;
 
 import javax.swing.JPanel;
 import javax.swing.Timer;
@@ -16,16 +19,19 @@ public class CirclesPanel extends JPanel {
 
     private static Color AXIS_COLOR = new Color(0, 0, 255, 50);
     private static Color CIRCLE_COLOR = new Color(100, 100, 100, 100);
-    private static Color RADIUS_COLOR = Color.BLACK;
+    private static Color RADIUS_COLOR = new Color(100, 100, 100, 100);
+    private static Color CURVE_COLOR = Color.BLACK;
     
-    private int delay = 50;
+    private static int delay = 17;
+    private static double increment = PI/90;
     
     private double[][] circles;
     
     private Timer timer = null;
     private double angle = 0;
-    private double increment = PI/90;
-    
+    private Point2D prev = null;
+    private BufferedImage curve;
+    private Graphics2D curveGraphics;
     
     CirclesPanel(double[][] circles) {
         this.circles = circles;
@@ -35,16 +41,21 @@ public class CirclesPanel extends JPanel {
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
         
+        int hw = getWidth()/2;
+        int hh = getHeight()/2;
+
         if (timer == null) {
             angle = 0;
+            curve = new BufferedImage(getWidth(), getHeight(), BufferedImage.TYPE_INT_ARGB);
+            curveGraphics = curve.createGraphics();
+            curveGraphics.translate(hw, hh);
+            curveGraphics.setStroke(new BasicStroke(3f));
             timer = new Timer(delay, this::animate);
             timer.start();
         }
         
-        int hw = getWidth()/2;
-        int hh = getHeight()/2;
         Graphics2D gg = (Graphics2D) g;
-        
+        gg.drawImage(curve, 0, 0, this);
         gg.translate(hw, hh);
         
         gg.setColor(AXIS_COLOR);
@@ -68,6 +79,13 @@ public class CirclesPanel extends JPanel {
             cx = nx;
             cy = ny;
         }
+        
+        Point2D actual = new Point2D.Double(cx, cy);
+        if (prev != null) {
+            curveGraphics.setColor(CURVE_COLOR);
+            curveGraphics.draw(new Line2D.Double(prev, actual));
+        }
+        prev = actual;
     }
     
     private void animate(ActionEvent ev) {
@@ -79,6 +97,7 @@ public class CirclesPanel extends JPanel {
             repaint();
         } else {
             timer.stop();
+            curveGraphics.dispose();
         }
     }
 }
