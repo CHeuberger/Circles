@@ -11,90 +11,61 @@ import org.jtransforms.fft.DoubleFFT_1D;
 
 public class Circles {
 
-    public static void main(String[] args) {
-        new Circles();
-    }
-    
-    private static final int SIZE = 1000;
     private static final int N = 256;
-    private static final int COUNT = 32;
-    
-    private double[] input;
-    private double[][] data;
-    
-    private JFrame frame;
-    private CirclesPanel circles;
-    
-    
-    private Circles() {
-//        data = new double[][] {
-//            {  0.0,  0.00},
-//            {100.0,  0.00},
-//            { 50.0,  0.00},
-//            { 50.0,  1.57},
-//        };
-        
-        input = new double[2*N];
-        
-//        // Circle
-//        int j = 0;
-//        for (int i = 0; i < N; i++) {
-//            double a = toRadians(i * 360.0 / N);
-//            input[j++] = cos(a);
-//            input[j++] = sin(a);
-//        }
+    private static final int COUNT = 5;
+    private static final int SIZE = 1000;
+
+    public static void main(String[] args) {
+        double[] data = new double[2*N];
         
         // 3 Circles
-        int j = 0;
+        double[] r = {0.3, 0.6, 0.4};
+        double[] p = {0.0, 0.8, 1.6};
         for (int i = 0; i < N; i++) {
             double a = toRadians(i * 360.0 / N);
-            input[j++] = cos(a)/3 + cos(2*a+0.4)/2 + 2*cos(3*a-0.4)/3;
-            input[j++] = sin(a)/3 + sin(2*a+0.4)/2 + 2*sin(3*a-0.4)/3;
+            data[2*i+0] = r[0]*cos(a+p[0]) + r[1]*cos(2*a+p[1]) + r[2]*cos(3*a+p[2]);
+            data[2*i+1] = r[0]*sin(a+p[0]) + r[1]*sin(2*a+p[1]) + r[2]*sin(3*a+p[2]);
         }
+        new Circles(data, COUNT, SIZE);
+    }
+    
+    
+    private final int size;
+    private final double[] input;
+    private final double[][] circles;
+    
+    private JFrame frame;
+    private CirclesPanel panel;
+    
+    
+    private Circles(double[] input, int count, int size) {
+        this.size = size;
+        this.input = input;
+        int n = input.length / 2;
         
-//        // Square
-//        final int seg = N / 4;
-//        int j = 0;
-//        for (int i = 0; i < seg; i++) {
-//            input[j++] = (double) i / seg - 0.5;
-//            input[j++] = -0.5;
-//        }
-//        for (int i = 0; i < seg; i++) {
-//            input[j++] = 0.5;
-//            input[j++] = (double) i / seg - 0.5;
-//        }
-//        for (int i = 0; i < seg; i++) {
-//            input[j++] = 0.5 - (double) (i) / seg;
-//            input[j++] = 0.5;
-//        }
-//        for (int i = 0; i < seg; i++) {
-//            input[j++] = -0.5;
-//            input[j++] = 0.5 - (double) (i) / seg;
-//        }
-        
-        DoubleFFT_1D fft = new DoubleFFT_1D(N);
-        double[] result = Arrays.copyOf(input, 2*N);
+        DoubleFFT_1D fft = new DoubleFFT_1D(n);
+        double[] result = Arrays.copyOf(input, 2*n);
         fft.complexForward(result);
         
-        data = new double[COUNT][2];
-        for (int i = 0; i < COUNT; i++) {
+        circles = new double[count][2];
+        for (int i = 0; i < count; i++) {
             double x = result[2*i+0];
             double y = result[2*i+1];
-            data[i][0] = sqrt(x*x + y*y) / N;
-            data[i][1] = atan2(y, x);
-            System.out.printf("%7.2f,%7.2f   %7.2f < %7.2f%n", x, y, data[i][0], data[i][1]);
+            circles[i][0] = sqrt(x*x + y*y) / n;
+            circles[i][1] = atan2(y, x);
+            System.out.printf("%7.2f,%7.2f   %7.2f < %7.2f%n", x, y, circles[i][0], circles[i][1]);
         }
         
         SwingUtilities.invokeLater(this::initGUI);
     }
     
     private void initGUI() {
-        circles = new CirclesPanel(SIZE/4, input, data);
+        panel = new CirclesPanel(size/4, input, circles);
         
         frame = new JFrame("Circles");
-        frame.add(circles);
+        frame.add(panel);
         frame.setDefaultCloseOperation(frame.DISPOSE_ON_CLOSE);
-        frame.setSize(SIZE, SIZE);
+        frame.setSize(size, size);
         frame.setResizable(false);
         frame.validate();
         frame.setLocationRelativeTo(null);
