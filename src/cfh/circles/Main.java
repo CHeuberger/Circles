@@ -73,7 +73,7 @@ public class Main {
         del.addActionListener(this::doDel);
         
         Box buttons = Box.createHorizontalBox();
-        buttons.add(Box.createHorizontalStrut(10));
+        buttons.add(Box.createHorizontalStrut(20));
         buttons.add(data);
         buttons.add(Box.createHorizontalGlue());
         buttons.add(start);
@@ -82,10 +82,8 @@ public class Main {
         buttons.add(out);
         buttons.add(in);
         buttons.add(Box.createHorizontalGlue());
-        buttons.add(Box.createHorizontalStrut(60));
         buttons.add(clear);
-        buttons.add(Box.createHorizontalStrut(60));
-        buttons.add(Box.createHorizontalGlue());
+        buttons.add(Box.createHorizontalStrut(20));
         buttons.add(Box.createHorizontalStrut(10));
         buttons.add(load);
         buttons.add(Box.createHorizontalStrut(10));

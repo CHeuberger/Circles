@@ -1,9 +1,8 @@
 package cfh.circles;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -33,8 +32,9 @@ public class SVG {
     
     private SVG() {
         File file = getFile();
-        try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
-            double[] data = read(reader);
+        
+        try {
+            double[] data = read(Files.readAllLines(file.toPath()));
             int n = data.length;
             System.out.println(n);
             data = Arrays.copyOf(data, 2*n);
@@ -72,13 +72,13 @@ public class SVG {
         return null;
     }
     
-    private final Pattern M_PATTERN = Pattern.compile(
-            "(?<x>[+-]?[0-9.]+)"
+    private static final Pattern M_PATTERN = Pattern.compile(
+            " *(?<x>[+-]?[0-9.]+)"
             + "[ ,]+"
             + "(?<y>[+-]?[0-9.]+)"
             + "(?<line>.*)");
-    private final Pattern C_PATTERN = Pattern.compile(
-            "(?:[+-]?[0-9.]+[ ,]+){4}"
+    private static final Pattern C_PATTERN = Pattern.compile(
+            " *(?:[+-]?[0-9.]+[ ,]+){4}"
             + "(?<x>[+-]?[0-9.]+)"
             + "[ ,]+"
             + "(?<y>[+-]?[0-9.]+)"
@@ -86,19 +86,18 @@ public class SVG {
     
     // <path d="m204,286c0,-2.789337 0,-3.514679 0,-4.479156c0,-0.920837 0,-1.820831 0,-2.720856c0, 
     // ... ,-0.899994" id="svg_11" stroke-width="5" stroke="#000000" fill="none"/>
-    private double[] read(BufferedReader reader) throws IOException {
+    public static double[] read(List<String> lines) {
         List<Double> points = new ArrayList<>();
-        String line;
         double lx = -300;
         double ly = -200;
         double max = 0;
         int state = 0;
         readline:
-        while ((line = reader.readLine()) != null) {
+        for (String line : lines) {
             while (!line.isEmpty()) {
                 switch (state) {
                     case 0: {
-                        int i = line.indexOf("<path ");
+                        int i = line.indexOf("<path");
                         if (i == -1) {
                             continue readline;
                         }
@@ -176,7 +175,7 @@ public class SVG {
             }
         }
         System.out.println(points);
-        double m = max * 1;
+        double m = max / 100.0;
         return points.stream().mapToDouble(Double::doubleValue).map(i -> i / m).toArray();
     }
 }

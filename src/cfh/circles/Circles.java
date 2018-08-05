@@ -65,19 +65,27 @@ public class Circles extends AbstractTableModel {
             return;
 
         double[] data;
-        try {
-            data = lines
-                .stream()
-                .map(String::trim)
-                .filter(((Predicate<String>)String::isEmpty).negate())
-                .map(s -> Arrays.stream(s.split("\\s++",2)).mapToDouble(Double::parseDouble).toArray())
-                .peek(a -> {if (a.length != 2) throw new NumberFormatException(Arrays.toString(a));})
-                .flatMapToDouble(Arrays::stream)
-                .toArray();
-        } catch (NumberFormatException ex) {
-            JOptionPane.showMessageDialog(null, ex);
-            return;
+        if ((ev.getModifiers() & ev.CTRL_MASK) != 0) {
+            data = SVG.read(lines);
+        } else {
+            try {
+                data = lines
+                        .stream()
+                        .map(String::trim)
+                        .filter(((Predicate<String>)String::isEmpty).negate())
+                        .map(s -> Arrays.stream(s.split("\\s++",2)).mapToDouble(Double::parseDouble).toArray())
+                        .peek(a -> {if (a.length != 2) throw new NumberFormatException(Arrays.toString(a));})
+                        .flatMapToDouble(Arrays::stream)
+                        .toArray();
+            } catch (NumberFormatException ex) {
+                JOptionPane.showMessageDialog(null, ex);
+                return;
+            }
         }
+        
+        if (data.length == 0)
+            return;
+        
         input = Arrays.copyOf(data, data.length);
         
         int n = data.length/2;

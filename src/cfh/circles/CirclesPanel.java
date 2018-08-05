@@ -112,10 +112,10 @@ public class CirclesPanel extends JPanel {
             for (int i = 0; i < points.length; i += 2) {
                 double x = points[i] * norm;
                 double y = points[i+1] * norm;
-                Line2D.Double l = new Line2D.Double(x-5, y-5, x+5, y+5);
+                Line2D.Double l = new Line2D.Double(x-5, y-3, x+5, y+3);
                 gg.draw(l);
                 l.y1 = l.y2;
-                l.y2 = y-5;
+                l.y2 = y-3;
                 gg.draw(l);
             }
         }
