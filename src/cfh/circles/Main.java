@@ -3,7 +3,6 @@ package cfh.circles;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
-
 import javax.swing.Box;
 import javax.swing.JButton;
 import javax.swing.JFrame;
@@ -37,6 +36,10 @@ public class Main {
         table = new JTable(circles);
         table.setPreferredScrollableViewportSize(new Dimension(200, 400));
         
+        JButton data = new JButton("Data");
+        data.setToolTipText("Load data from file");
+        data.addActionListener(circles::doData);
+        
         JButton start = new JButton("Start");
         start.setToolTipText("Start/Stop animation");
         start.addActionListener(panel::doStartStop);
@@ -58,7 +61,7 @@ public class Main {
         clear.addActionListener(panel::doClear);
         
         JButton load = new JButton("Load");
-        load.setToolTipText("Load data from file");
+        load.setToolTipText("Load circles from file");
         load.addActionListener(circles::doLoad);
         
         JButton add = new JButton("Add");
@@ -70,6 +73,8 @@ public class Main {
         del.addActionListener(this::doDel);
         
         Box buttons = Box.createHorizontalBox();
+        buttons.add(Box.createHorizontalStrut(10));
+        buttons.add(data);
         buttons.add(Box.createHorizontalGlue());
         buttons.add(start);
         buttons.add(step);
@@ -77,9 +82,9 @@ public class Main {
         buttons.add(out);
         buttons.add(in);
         buttons.add(Box.createHorizontalGlue());
-        buttons.add(Box.createHorizontalStrut(30));
+        buttons.add(Box.createHorizontalStrut(60));
         buttons.add(clear);
-        buttons.add(Box.createHorizontalStrut(30));
+        buttons.add(Box.createHorizontalStrut(60));
         buttons.add(Box.createHorizontalGlue());
         buttons.add(Box.createHorizontalStrut(10));
         buttons.add(load);

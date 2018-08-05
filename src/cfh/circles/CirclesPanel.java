@@ -20,6 +20,7 @@ import javax.swing.event.TableModelEvent;
 public class CirclesPanel extends JPanel {
 
     private static final Color AXIS_COLOR = new Color(0, 0, 255, 50);
+    private static final Color POINTS_COLOR = new Color(255, 0, 0, 200);
     private static final Color CIRCLE_COLOR = new Color(100, 100, 100, 100);
     private static final Color RADIUS_COLOR = new Color(0, 0, 0, 200);
     private static final Color CURVE_COLOR = Color.BLACK;
@@ -105,6 +106,20 @@ public class CirclesPanel extends JPanel {
         gg.drawLine(-hw, 0, hw, 0);
         gg.drawLine(0, -hh, 0, hh);
         
+        double[] points = circles.input();
+        if (points != null) {
+            gg.setColor(POINTS_COLOR);
+            for (int i = 0; i < points.length; i += 2) {
+                double x = points[i] * norm;
+                double y = points[i+1] * norm;
+                Line2D.Double l = new Line2D.Double(x-5, y-5, x+5, y+5);
+                gg.draw(l);
+                l.y1 = l.y2;
+                l.y2 = y-5;
+                gg.draw(l);
+            }
+        }
+        
         if (circles != null && !circles.isEmpty()) {
             double cx = 0;
             double cy = 0;
@@ -125,7 +140,9 @@ public class CirclesPanel extends JPanel {
             Point2D actual = new Point2D.Double(cx, cy);
             if (prev != null) {
                 curveGraphics.setColor(CURVE_COLOR);
-                curveGraphics.draw(new Line2D.Double(prev, actual));
+                Line2D.Double line = new Line2D.Double(prev, actual);
+                curveGraphics.draw(line);
+                gg.draw(line);
             }
             prev = actual;
         }

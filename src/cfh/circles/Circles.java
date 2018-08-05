@@ -1,13 +1,17 @@
 package cfh.circles;
 
+import static java.lang.Math.*;
 import static java.util.stream.Collectors.*;
 
-import java.awt.Component;
+import java.awt.Color;
+import java.awt.Graphics2D;
 import java.awt.Toolkit;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.UnsupportedFlavorException;
 import java.awt.event.ActionEvent;
+import java.awt.geom.Line2D;
+import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.ArrayList;
@@ -15,9 +19,12 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.function.Predicate;
 import java.util.prefs.Preferences;
+import javax.swing.ImageIcon;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.table.AbstractTableModel;
+
+import org.jtransforms.fft.DoubleFFT_1D;
 
 
 public class Circles extends AbstractTableModel {
@@ -30,6 +37,7 @@ public class Circles extends AbstractTableModel {
     private final Preferences prefs = Preferences.userNodeForPackage(getClass());
     
     private final List<double[]> circles = new ArrayList<>();
+    private double[] input = null;
     
 
     Circles() {
@@ -41,50 +49,199 @@ public class Circles extends AbstractTableModel {
         fireTableDataChanged();
     }
     
-    void doLoad(ActionEvent ev) {
-        String dir = prefs.get(PREF_DIR, ".");
-        JFileChooser chooser = new JFileChooser(dir);
-        chooser.setAcceptAllFileFilterUsed(true);
-        chooser.setFileSelectionMode(chooser.FILES_ONLY);
-        chooser.setMultiSelectionEnabled(false);
-        if (chooser.showOpenDialog((Component) ev.getSource()) != chooser.APPROVE_OPTION)
+/*
+ 20   0
+ 20  20
+  0  20
+-20  20
+-20   0
+-20 -20
+  0 -20
+ 20 -20
+ */
+    void doData(ActionEvent ev) {
+        List<String> lines = readLines((ev.getModifiers() & ev.SHIFT_MASK) != 0);
+        if (lines == null) 
             return;
 
+        double[] data;
+        try {
+            data = lines
+                .stream()
+                .map(String::trim)
+                .filter(((Predicate<String>)String::isEmpty).negate())
+                .map(s -> Arrays.stream(s.split("\\s++",2)).mapToDouble(Double::parseDouble).toArray())
+                .peek(a -> {if (a.length != 2) throw new NumberFormatException(Arrays.toString(a));})
+                .flatMapToDouble(Arrays::stream)
+                .toArray();
+        } catch (NumberFormatException ex) {
+            JOptionPane.showMessageDialog(null, ex);
+            return;
+        }
+        input = Arrays.copyOf(data, data.length);
+        
+        int n = data.length/2;
+        DoubleFFT_1D fft = new DoubleFFT_1D(n);
+        fft.complexForward(data);
+        
+        circles.clear();
+        double x = data[0];
+        double y = data[1];
+        double r = sqrt(x*x + y*y) / n;
+        double a = atan2(y, x);
+        circles.add(new double[] {0, r, a});
+        // TODO reverse search start
+        for (int i = 1; i < n/2; i++) {
+            x = data[2*i];
+            y = data[2*i+1];
+            r = sqrt(x*x + y*y) / n;
+            a = atan2(y, x);
+            circles.add(new double[] {i, r, a});
+            x = data[data.length-2*i];
+            y = data[data.length-2*i+1];
+            r = sqrt(x*x + y*y) / n;
+            a = atan2(y, x);
+            circles.add(new double[] {-i, r, a});
+        }
+        fireTableDataChanged();
+    }
+
+/*
+ 0  0  0
+ 1 10  0
+-1  5  0
+ */
+    void doLoad(ActionEvent ev) {
+        if ((ev.getModifiers() & ev.CTRL_MASK) != 0) {
+            special();  // TODO save
+            return;
+        }
+        
+        List<String> lines = readLines((ev.getModifiers() & ev.SHIFT_MASK) != 0);
+        if (lines == null) 
+            return;
+
+        circles.clear();
+        try {
+            lines
+            .stream()
+            .map(String::trim)
+            .filter(((Predicate<String>)String::isEmpty).negate())
+            .map(s -> Arrays.stream(s.split("\\s++",3)).mapToDouble(Double::parseDouble).toArray())
+            .peek(a -> {if (a.length != 3) throw new NumberFormatException(Arrays.toString(a));})
+            .forEach(circles::add);
+        } catch (NumberFormatException ex) {
+            JOptionPane.showMessageDialog(null, ex);
+            return;
+        }
+        fireTableDataChanged();
+    }
+
+    private List<String> readLines(boolean shift) {
         List<String> lines;
-        if (chooser.getSelectedFile().getName().equals("-")) {
+        if (shift) {
             Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
             String text;
             try {
                 text = String.valueOf(clipboard.getData(DataFlavor.stringFlavor));
             } catch (UnsupportedFlavorException | IOException ex) {
-                JOptionPane.showMessageDialog((Component) ev.getSource(), ex.getMessage());
+                JOptionPane.showMessageDialog(null, ex);
                 ex.printStackTrace();
-                return;
+                return null;
             }
-            System.out.println(text);
             if (text.equals("null") || text.isEmpty())
-                return;
+                return null;
             lines = Arrays.stream(text.split("\\R",-1)).collect(toList());
         } else {
+            String dir = prefs.get(PREF_DIR, ".");
+            JFileChooser chooser = new JFileChooser(dir);
+            chooser.setAcceptAllFileFilterUsed(true);
+            chooser.setFileSelectionMode(chooser.FILES_ONLY);
+            chooser.setMultiSelectionEnabled(false);
+            if (chooser.showOpenDialog(null) != chooser.APPROVE_OPTION)
+                return null;
+
             dir = chooser.getCurrentDirectory().getAbsolutePath();
             prefs.put(PREF_DIR, dir);
             try {
                 lines = Files.readAllLines(chooser.getSelectedFile().toPath());
             } catch (IOException ex) {
                 ex.printStackTrace();
-                JOptionPane.showMessageDialog((Component) ev.getSource(), ex.getMessage());
-                return;
+                JOptionPane.showMessageDialog(null, ex);
+                return null;
             }
         }
-
-        circles.clear();
-        lines.stream()
-        .map(String::trim)
-        .filter(((Predicate<String>)String::isEmpty).negate())
-        .map(s -> Arrays.stream(s.split("\\s++",-1)).mapToDouble(Double::parseDouble).toArray())
-        .forEach(circles::add);
-        fireTableDataChanged();
+        return lines;
     }
+
+    private void special() {
+        final int N = 128;
+        double[] points = new double[2*N];
+        int index = 0;
+        double angle = 0;
+        double step = 2*PI / N;
+        for (int i = 0; i < N; i++, angle += step) {
+            double cx = 0;
+            double cy = 0;
+
+            for (double[] circle : circles) {
+                double r = circle[RADIUS];
+                double a = circle[ANGLE] + circle[OMEGA] * angle;
+                cx += r * cos(a);
+                cy += r * sin(a);
+            }
+//            System.out.printf("%8.2f  %8.2f%n", cx, cy);
+            points[index++] = cx;
+            points[index++] = cy;
+        }
+        
+        BufferedImage img = new BufferedImage(1000, 300, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D gg = img.createGraphics();
+        gg.fillRect(0, 0, img.getWidth(), img.getHeight());
+        Line2D.Double l1;
+        Line2D.Double l2;
+        l1 = new Line2D.Double();
+        l2 = new Line2D.Double();
+        for (int i = 0; i < N; i++) {
+            l1.x1 = l1.x2;
+            l1.y1 = l1.y2;
+            l2.x1 = l2.x2;
+            l2.y1 = l2.y2;
+            l1.x2 = l2.x2 = i * 1000.0 / N;
+            l1.y2 = 150 + points[2*i];
+            l2.y2 = 150 + points[2*i+1];
+            if (i > 0) {
+                gg.setColor(Color.BLUE);
+                gg.draw(l1);
+                gg.setColor(Color.GREEN);
+                gg.draw(l2);
+            }
+        }
+//        JOptionPane.showMessageDialog(null, new ImageIcon(img));
+        
+        DoubleFFT_1D fft = new DoubleFFT_1D(N);
+        fft.complexForward(points);
+
+        l1 = new Line2D.Double();
+        l2 = new Line2D.Double();
+        for (int i = 0; i < N; i++) {
+            System.out.printf("%8.2f  %8.2f%n", points[2*i]/N, points[2*i+1]/N);
+            l1.x1 = l1.x2;
+            l1.y1 = l1.y2;
+            l2.x1 = l2.x2;
+            l2.y1 = l2.y2;
+            l1.x2 = l2.x2 = i * 1000.0 / N;
+            l1.y2 = 150 + points[2*i]/N;
+            l2.y2 = 150 + points[2*i+1]/N;
+            if (i > 0) {
+                gg.setColor(Color.RED);
+                gg.draw(l1);
+                gg.setColor(Color.ORANGE);
+                gg.draw(l2);
+            }
+        }
+        JOptionPane.showMessageDialog(null, new ImageIcon(img));
+}
 
     void add(double omega, double radius, double angle) {
         int old = circles.size();
@@ -99,6 +256,10 @@ public class Circles extends AbstractTableModel {
     
     boolean isEmpty() {
         return circles.isEmpty();
+    }
+    
+    double[] input() {
+        return input;
     }
     
     double omega(int i) {
@@ -136,7 +297,7 @@ public class Circles extends AbstractTableModel {
     @Override
     public Object getValueAt(int row, int col) {
         if (col == ANGLE)
-            return Math.toDegrees(circles.get(row)[col]);
+            return toDegrees(circles.get(row)[col]);
         else
             return circles.get(row)[col];
     }
@@ -145,7 +306,7 @@ public class Circles extends AbstractTableModel {
     public void setValueAt(Object value, int row, int col) {
         double val = ((Number) value).doubleValue();
         if (col == ANGLE) {
-            val = Math.toRadians(val);
+            val = toRadians(val);
         }
         double[] circle = circles.get(row);
         double old = circle[col];
