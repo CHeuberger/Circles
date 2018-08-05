@@ -5,6 +5,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.prefs.Preferences;
 import java.util.regex.Matcher;
@@ -15,6 +16,11 @@ import javax.swing.JOptionPane;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
 public class SVG {
+
+    private static final int COUNT = 256;
+    private static final int SIZE = 900;
+    private static final int SCALE = 400;
+
 
     public static void main(String[] args) {
         new SVG();
@@ -29,8 +35,11 @@ public class SVG {
         File file = getFile();
         try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
             double[] data = read(reader);
-            System.out.println(data.length);
-            new Circles(data, 512, 900, 400);
+            int n = data.length;
+            System.out.println(n);
+            data = Arrays.copyOf(data, 2*n);
+            System.arraycopy(data, 0, data, n, n);
+            new Circles(data, COUNT, SIZE, SCALE);
         } catch (IOException ex) {
             ex.printStackTrace();
             JOptionPane.showMessageDialog(null, ex.getMessage(), "Exception", JOptionPane.ERROR_MESSAGE);

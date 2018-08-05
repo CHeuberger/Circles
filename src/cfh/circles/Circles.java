@@ -26,6 +26,7 @@ public class Circles {
             data[2*i+0] = r[0]*cos(a+p[0]) + r[1]*cos(2*a+p[1]) + r[2]*cos(3*a+p[2]);
             data[2*i+1] = r[0]*sin(a+p[0]) + r[1]*sin(2*a+p[1]) + r[2]*sin(3*a+p[2]);
         }
+        
         new Circles(data, COUNT, SIZE, SIZE/4);
     }
     
