@@ -39,7 +39,7 @@ public class SVG {
             System.out.println(n);
             data = Arrays.copyOf(data, 2*n);
             System.arraycopy(data, 0, data, n, n);
-            new Circles(data, COUNT, SIZE, SCALE);
+            new Circles1(data, COUNT, SIZE, SCALE);
         } catch (IOException ex) {
             ex.printStackTrace();
             JOptionPane.showMessageDialog(null, ex.getMessage(), "Exception", JOptionPane.ERROR_MESSAGE);

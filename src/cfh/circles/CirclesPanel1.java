@@ -12,7 +12,6 @@ import java.awt.geom.Ellipse2D;
 import java.awt.geom.Line2D;
 import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
-import java.beans.PropertyChangeEvent;
 
 import javax.swing.AbstractAction;
 import javax.swing.ActionMap;
@@ -22,8 +21,9 @@ import javax.swing.KeyStroke;
 import javax.swing.Timer;
 
 
-public class CirclesPanel extends JPanel {
+public class CirclesPanel1 extends JPanel {
 
+    private static final Color INPUT_COLOR = new Color(0, 255, 0, 100);
     private static final Color AXIS_COLOR = new Color(0, 0, 255, 50);
     private static final Color CIRCLE_COLOR = new Color(100, 100, 100, 100);
     private static final Color RADIUS_COLOR = new Color(0, 0, 0, 200);
@@ -32,13 +32,13 @@ public class CirclesPanel extends JPanel {
     private static final String ACTION_START_STOP = "CirclesStartStop";
     private static final String ACTION_STEP = "CirclesStep";
     private static final String ACTION_CLEAR = "CircleClear";
-
+    
     private static final int delay = 10;
     private static double increment = PI/180;
     
-    private final Circles circles;
-    
-    private double scale = 100;
+    private double scale;
+    private final double[] input;
+    private final double[][] circles;
     
     private Timer timer = null;
     private double angle = 0;
@@ -46,9 +46,11 @@ public class CirclesPanel extends JPanel {
     private BufferedImage curve;
     private Graphics2D curveGraphics;
     
-    CirclesPanel(Circles circles) {
+    CirclesPanel1(double scale, double[] input, double[][] circles) {
+        this.scale = scale;
+        this.input = input;
         this.circles = circles;
-        
+       
         setFocusable(true);
         ActionMap am = getActionMap();
         InputMap im = getInputMap(WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
@@ -73,8 +75,6 @@ public class CirclesPanel extends JPanel {
         im.put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), ACTION_START_STOP);
         im.put(KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0), ACTION_STEP);
         im.put(KeyStroke.getKeyStroke(KeyEvent.VK_BACK_SPACE, 0), ACTION_CLEAR);
-        
-        circles.addPropertyChangeListener(this::changed);
     }
     
     private void doStartStop() {
@@ -97,11 +97,10 @@ public class CirclesPanel extends JPanel {
         int hw = getWidth()/2;
         int hh = getHeight()/2;
         curveGraphics.clearRect(-hw, -hh, hw+hw, hh+hh);
+        if (input != null) {
+            drawInput(curveGraphics);
+        }
         repaint();
-    }
-    
-    private void changed(PropertyChangeEvent ev) {
-        doClear();
     }
 
     @Override
@@ -110,15 +109,17 @@ public class CirclesPanel extends JPanel {
         
         int hw = getWidth()/2;
         int hh = getHeight()/2;
-        double norm = Math.min(hw, hh) / 10_000.0 * scale;
 
         if (timer == null) {
             angle = 0;
-            curve = new BufferedImage(2*hw, 2*hh, BufferedImage.TYPE_INT_ARGB);
+            curve = new BufferedImage(getWidth(), getHeight(), BufferedImage.TYPE_INT_ARGB);
             curveGraphics = curve.createGraphics();
             curveGraphics.setBackground(new Color(0, 0, 0, 0));
             curveGraphics.translate(hw, hh);
             curveGraphics.setStroke(new BasicStroke(3f));
+            if (input != null) {
+                drawInput(curveGraphics);
+            }
             curveGraphics.setStroke(new BasicStroke(3f));
             timer = new Timer(delay, this::animate);
             timer.start();
@@ -132,31 +133,43 @@ public class CirclesPanel extends JPanel {
         gg.drawLine(-hw, 0, hw, 0);
         gg.drawLine(0, -hh, 0, hh);
         
-        if (circles != null && !circles.isEmpty()) {
-            double r = circles.radius(0) * norm;
-            double a = circles.angle(0);
-            double cx = r * cos(a);
-            double cy = r * sin(a);
+        double r = circles[0][0] * scale;
+        double a = circles[0][1];
+        double cx = r * cos(a);
+        double cy = r * sin(a);
+        
+        for (int i = 1; i < circles.length; i++) {
+            r = circles[i][0] * scale;
+            a = circles[i][1] + i * angle;
+            gg.setColor(CIRCLE_COLOR);
+            gg.draw(new Ellipse2D.Double(cx-r, cy-r, r+r, r+r));
+            gg.setColor(RADIUS_COLOR);
+            double nx = cx + r * cos(a);
+            double ny = cy + r * sin(a);
+            gg.draw(new Line2D.Double(cx, cy, nx, ny));
+            cx = nx;
+            cy = ny;
+        }
+        
+        Point2D actual = new Point2D.Double(cx, cy);
+        if (prev != null) {
+            curveGraphics.setColor(CURVE_COLOR);
+            curveGraphics.draw(new Line2D.Double(prev, actual));
+        }
+        prev = actual;
+    }
 
-            for (int i = 1; i < circles.count(); i++) {
-                r = circles.radius(i) * norm;
-                a = circles.angle(i) + i * angle;
-                gg.setColor(CIRCLE_COLOR);
-                gg.draw(new Ellipse2D.Double(cx-r, cy-r, r+r, r+r));
-                gg.setColor(RADIUS_COLOR);
-                double nx = cx + r * cos(a);
-                double ny = cy + r * sin(a);
-                gg.draw(new Line2D.Double(cx, cy, nx, ny));
-                cx = nx;
-                cy = ny;
-            }
+    private void drawInput(Graphics2D gg) {
+        gg.setColor(INPUT_COLOR);
+        int n = input.length / 2;
+        Line2D line = new Line2D.Double();
 
-            Point2D actual = new Point2D.Double(cx, cy);
-            if (prev != null) {
-                curveGraphics.setColor(CURVE_COLOR);
-                curveGraphics.draw(new Line2D.Double(prev, actual));
+        for (int i = 0; i < n; i++) {
+            Point2D p = new Point2D.Double(input[2*i+0]*scale, input[2*i+1]*scale);
+            line.setLine(line.getP2(), p);
+            if (i > 0) {
+                gg.draw(line);
             }
-            prev = actual;
         }
     }
     
