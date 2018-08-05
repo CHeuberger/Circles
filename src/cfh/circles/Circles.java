@@ -1,57 +1,95 @@
 package cfh.circles;
 
-import java.awt.geom.Point2D;
-import java.beans.PropertyChangeListener;
-import java.beans.PropertyChangeSupport;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Circles {
+import javax.swing.table.AbstractTableModel;
 
-    public static final String PROP_SIZE = "circles.size";
+
+public class Circles extends AbstractTableModel {
+
+    private static final int OMEGA = 0;
+    private static final int RADIUS = 1;
+    private static final int ANGLE = 2;
     
-    private final List<Point2D.Double> circles = new ArrayList<>();
-    
-    private final PropertyChangeSupport support = new PropertyChangeSupport(this);
+    private final List<double[]> circles = new ArrayList<>();
     
 
-    public void clear() {
-        int old = circles.size();
+    Circles() {
+        //
+    }
+    
+    void clear() {
         circles.clear();
-        support.firePropertyChange(PROP_SIZE, old, 0);
+        fireTableDataChanged();
     }
     
-    public void add(double radius, double angle) {
+    void add(double omega, double radius, double angle) {
         int old = circles.size();
-        circles.add(new Point2D.Double(radius, angle));
-        support.firePropertyChange(PROP_SIZE, old, circles.size());
+        circles.add(new double[] {omega, radius, angle});
+        fireTableRowsInserted(old, old);
     }
     
-    public boolean isEmpty() {
+    void del(int row) {
+        circles.remove(row);
+        fireTableRowsDeleted(row, row);
+    }
+    
+    boolean isEmpty() {
         return circles.isEmpty();
     }
     
-    public int count() {
+    double omega(int i) {
+        return circles.get(i)[OMEGA];
+    }
+    
+    double radius(int i) {
+        return circles.get(i)[RADIUS];
+    }
+    
+    double angle(int i) {
+        return circles.get(i)[ANGLE];
+    }
+    
+    @Override
+    public boolean isCellEditable(int row, int col) {
+        return true;
+    }
+
+    @Override
+    public int getRowCount() {
         return circles.size();
     }
-    
-    public double radius(int i) {
-        return circles.get(i).x;
+
+    @Override
+    public int getColumnCount() {
+        return 3;
+    }
+
+    @Override
+    public Class<?> getColumnClass(int col) {
+        return Double.class;
     }
     
-    public double angle(int i) {
-        return circles.get(i).y;
+    @Override
+    public Object getValueAt(int row, int col) {
+        if (col == ANGLE)
+            return Math.toDegrees(circles.get(row)[col]);
+        else
+            return circles.get(row)[col];
     }
     
-    public void addPropertyChangeListener(PropertyChangeListener listener) {
-        support.addPropertyChangeListener(listener);
-    }
-    
-    public void removePropertyChangeListener(PropertyChangeListener listener) {
-        support.removePropertyChangeListener(listener);
-    }
-    
-    public PropertyChangeListener[] getPropertyChangeListeners() {
-        return support.getPropertyChangeListeners();
+    @Override
+    public void setValueAt(Object value, int row, int col) {
+        double val = ((Number) value).doubleValue();
+        if (col == ANGLE) {
+            val = Math.toRadians(val);
+        }
+        double[] circle = circles.get(row);
+        double old = circle[col];
+        circle[col] = val;
+        if (val != old) {
+            fireTableCellUpdated(row, col);
+        }
     }
 }

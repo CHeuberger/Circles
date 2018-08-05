@@ -1,6 +1,14 @@
 package cfh.circles;
 
+import java.awt.BorderLayout;
+import java.awt.Dimension;
+import java.awt.event.ActionEvent;
+
+import javax.swing.Box;
+import javax.swing.JButton;
 import javax.swing.JFrame;
+import javax.swing.JScrollPane;
+import javax.swing.JTable;
 import javax.swing.SwingUtilities;
 
 public class Main {
@@ -13,25 +21,94 @@ public class Main {
     
     private JFrame frame;
     private CirclesPanel panel;
+    private JTable table;
 
     private Main() {
         circles = new Circles();
-        circles.add(0, 0);
-        circles.add(50, 0.3);
-        circles.add(25, 0.3);
+        circles.add(0, 0, 0);
+        circles.add(1, 50, 0);
+        circles.add(-1, 50, 0);
         SwingUtilities.invokeLater(this::initGUI);
     }
     
     private void initGUI() {
         panel = new CirclesPanel(circles);
         
+        table = new JTable(circles);
+        table.setPreferredScrollableViewportSize(new Dimension(200, 400));
+        
+        JButton start = new JButton("Start");
+        start.setToolTipText("Start/Stop animation");
+        start.addActionListener(panel::doStartStop);
+        
+        JButton step = new JButton("Step");
+        step.setToolTipText("Step animation");
+        step.addActionListener(panel::doStep);
+        
+        JButton out = new JButton("Out");
+        out.setToolTipText("Zoom out");
+        out.addActionListener(this::doOut);
+        
+        JButton in = new JButton("In");
+        in.setToolTipText("Zoom in");
+        in.addActionListener(this::doIn);
+        
+        JButton clear = new JButton("Clear");
+        clear.setToolTipText("Clear");
+        clear.addActionListener(panel::doClear);
+        
+        JButton add = new JButton("Add");
+        add.setToolTipText("Add new circle");
+        add.addActionListener(this::doAdd);
+        
+        JButton del = new JButton("Del");
+        del.setToolTipText("Removes a circle");
+        del.addActionListener(this::doDel);
+        
+        Box buttons = Box.createHorizontalBox();
+        buttons.add(Box.createHorizontalGlue());
+        buttons.add(start);
+        buttons.add(step);
+        buttons.add(Box.createHorizontalGlue());
+        buttons.add(out);
+        buttons.add(in);
+        buttons.add(Box.createHorizontalGlue());
+        buttons.add(clear);
+        buttons.add(Box.createHorizontalGlue());
+        buttons.add(Box.createHorizontalStrut(50));
+        buttons.add(add);
+        buttons.add(Box.createHorizontalStrut(10));
+        buttons.add(del);
+        buttons.add(Box.createHorizontalStrut(50));
+        
         frame = new JFrame("Circles");
-        frame.add(panel);
+        frame.setLayout(new BorderLayout());
+        frame.add(panel, BorderLayout.CENTER);
+        frame.add(new JScrollPane(table), BorderLayout.LINE_END);
+        frame.add(buttons, BorderLayout.PAGE_END);
+        
         frame.setDefaultCloseOperation(frame.DISPOSE_ON_CLOSE);
-        frame.setSize(800, 800);
+        frame.setSize(1000, 800);
         frame.setResizable(false);
         frame.validate();
         frame.setLocationRelativeTo(null);
         frame.setVisible(true);
+    }
+    
+    private void doOut(ActionEvent ev) {
+        panel.zoom(0.75);
+    }
+    
+    private void doIn(ActionEvent ev) {
+        panel.zoom(4.0/3.0);
+    }
+    
+    private void doAdd(ActionEvent ev) {
+        circles.add(circles.getRowCount(), 0, 0);
+    }
+    
+    private void doDel(ActionEvent ev) {
+        int row = table.getSelectedRow();
+        circles.del(row==-1 ? circles.getRowCount()-1 : row);
     }
 }

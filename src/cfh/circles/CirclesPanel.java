@@ -7,19 +7,14 @@ import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.event.ActionEvent;
-import java.awt.event.KeyEvent;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.Line2D;
 import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
-import java.beans.PropertyChangeEvent;
 
-import javax.swing.AbstractAction;
-import javax.swing.ActionMap;
-import javax.swing.InputMap;
 import javax.swing.JPanel;
-import javax.swing.KeyStroke;
 import javax.swing.Timer;
+import javax.swing.event.TableModelEvent;
 
 
 public class CirclesPanel extends JPanel {
@@ -28,10 +23,6 @@ public class CirclesPanel extends JPanel {
     private static final Color CIRCLE_COLOR = new Color(100, 100, 100, 100);
     private static final Color RADIUS_COLOR = new Color(0, 0, 0, 200);
     private static final Color CURVE_COLOR = Color.BLACK;
-    
-    private static final String ACTION_START_STOP = "CirclesStartStop";
-    private static final String ACTION_STEP = "CirclesStep";
-    private static final String ACTION_CLEAR = "CircleClear";
 
     private static final int delay = 10;
     private static double increment = PI/180;
@@ -49,35 +40,15 @@ public class CirclesPanel extends JPanel {
     CirclesPanel(Circles circles) {
         this.circles = circles;
         
-        setFocusable(true);
-        ActionMap am = getActionMap();
-        InputMap im = getInputMap(WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
-        am.put(ACTION_START_STOP, new AbstractAction() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                doStartStop();
-            }
-        });
-        am.put(ACTION_STEP, new AbstractAction() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                doStep();
-            }
-        });
-        am.put(ACTION_CLEAR, new AbstractAction() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                doClear();
-            }
-        });
-        im.put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), ACTION_START_STOP);
-        im.put(KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0), ACTION_STEP);
-        im.put(KeyStroke.getKeyStroke(KeyEvent.VK_BACK_SPACE, 0), ACTION_CLEAR);
-        
-        circles.addPropertyChangeListener(this::changed);
+        circles.addTableModelListener(this::changed);
     }
     
-    private void doStartStop() {
+    void zoom(double zoom) {
+        scale *= zoom;
+        doClear(null);
+    }
+    
+    void doStartStop(ActionEvent ev) {
         if (timer.isRunning()) {
             timer.stop();
         } else {
@@ -85,7 +56,7 @@ public class CirclesPanel extends JPanel {
         }
     }
     
-    private void doStep() {
+    void doStep(ActionEvent ev) {
         if (timer.isRunning()) {
             timer.stop();
         } else {
@@ -93,15 +64,17 @@ public class CirclesPanel extends JPanel {
         }
     }
     
-    private void doClear() {
+    void doClear(ActionEvent ev) {
         int hw = getWidth()/2;
         int hh = getHeight()/2;
         curveGraphics.clearRect(-hw, -hh, hw+hw, hh+hh);
+        prev = null;
+        angle = 0;
         repaint();
     }
     
-    private void changed(PropertyChangeEvent ev) {
-        doClear();
+    private void changed(TableModelEvent ev) {
+        doClear(null);
     }
 
     @Override
@@ -110,7 +83,7 @@ public class CirclesPanel extends JPanel {
         
         int hw = getWidth()/2;
         int hh = getHeight()/2;
-        double norm = Math.min(hw, hh) / 10_000.0 * scale;
+        double norm = (Math.min(hw, hh) - 10 ) / 10_000.0 * scale;
 
         if (timer == null) {
             angle = 0;
@@ -133,14 +106,12 @@ public class CirclesPanel extends JPanel {
         gg.drawLine(0, -hh, 0, hh);
         
         if (circles != null && !circles.isEmpty()) {
-            double r = circles.radius(0) * norm;
-            double a = circles.angle(0);
-            double cx = r * cos(a);
-            double cy = r * sin(a);
+            double cx = 0;
+            double cy = 0;
 
-            for (int i = 1; i < circles.count(); i++) {
-                r = circles.radius(i) * norm;
-                a = circles.angle(i) + i * angle;
+            for (int i = 0; i < circles.getRowCount(); i++) {
+                double r = circles.radius(i) * norm;
+                double a = circles.angle(i) + circles.omega(i) * angle;
                 gg.setColor(CIRCLE_COLOR);
                 gg.draw(new Ellipse2D.Double(cx-r, cy-r, r+r, r+r));
                 gg.setColor(RADIUS_COLOR);
@@ -163,9 +134,6 @@ public class CirclesPanel extends JPanel {
     private void animate(ActionEvent ev) {
         if (isDisplayable()) {
             angle += increment;
-            if (angle > 2*PI) {
-                angle -= 2 * PI;
-            }
             repaint();
         } else {
             timer.stop();
