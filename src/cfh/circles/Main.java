@@ -47,15 +47,19 @@ public class Main {
         
         JButton out = new JButton("Out");
         out.setToolTipText("Zoom out");
-        out.addActionListener(this::doOut);
+        out.addActionListener(ev -> panel.zoom(0.75));
         
         JButton in = new JButton("In");
         in.setToolTipText("Zoom in");
-        in.addActionListener(this::doIn);
+        in.addActionListener(ev -> panel.zoom(1/0.75));
         
         JButton clear = new JButton("Clear");
         clear.setToolTipText("Clear");
         clear.addActionListener(panel::doClear);
+        
+        JButton load = new JButton("Load");
+        load.setToolTipText("Load data from file");
+        load.addActionListener(circles::doLoad);
         
         JButton add = new JButton("Add");
         add.setToolTipText("Add new circle");
@@ -73,13 +77,16 @@ public class Main {
         buttons.add(out);
         buttons.add(in);
         buttons.add(Box.createHorizontalGlue());
+        buttons.add(Box.createHorizontalStrut(30));
         buttons.add(clear);
+        buttons.add(Box.createHorizontalStrut(30));
         buttons.add(Box.createHorizontalGlue());
-        buttons.add(Box.createHorizontalStrut(50));
-        buttons.add(add);
         buttons.add(Box.createHorizontalStrut(10));
+        buttons.add(load);
+        buttons.add(Box.createHorizontalStrut(10));
+        buttons.add(add);
         buttons.add(del);
-        buttons.add(Box.createHorizontalStrut(50));
+        buttons.add(Box.createHorizontalStrut(10));
         
         frame = new JFrame("Circles");
         frame.setLayout(new BorderLayout());
@@ -93,14 +100,6 @@ public class Main {
         frame.validate();
         frame.setLocationRelativeTo(null);
         frame.setVisible(true);
-    }
-    
-    private void doOut(ActionEvent ev) {
-        panel.zoom(0.75);
-    }
-    
-    private void doIn(ActionEvent ev) {
-        panel.zoom(4.0/3.0);
     }
     
     private void doAdd(ActionEvent ev) {
