@@ -60,26 +60,35 @@ public class Circles extends AbstractTableModel {
  20 -20
  */
     void doData(ActionEvent ev) {
-        List<String> lines = readLines((ev.getModifiers() & ev.SHIFT_MASK) != 0);
-        if (lines == null) 
-            return;
-
         double[] data;
-        if ((ev.getModifiers() & ev.CTRL_MASK) != 0) {
-            data = SVG.read(lines);
-        } else {
-            try {
-                data = lines
-                        .stream()
-                        .map(String::trim)
-                        .filter(((Predicate<String>)String::isEmpty).negate())
-                        .map(s -> Arrays.stream(s.split("\\s++",2)).mapToDouble(Double::parseDouble).toArray())
-                        .peek(a -> {if (a.length != 2) throw new NumberFormatException(Arrays.toString(a));})
-                        .flatMapToDouble(Arrays::stream)
-                        .toArray();
-            } catch (NumberFormatException ex) {
-                JOptionPane.showMessageDialog(null, ex);
+        if ((ev.getModifiers() & ev.ALT_MASK) != 0) {
+            DrawPanel panel = new DrawPanel(input);
+            if (JOptionPane.showConfirmDialog(null, panel, "Draw", JOptionPane.OK_CANCEL_OPTION) != JOptionPane.OK_OPTION) {
                 return;
+            }
+            data = panel.data();
+            System.out.println(Arrays.toString(data));
+        } else {
+            List<String> lines = readLines((ev.getModifiers() & ev.SHIFT_MASK) != 0);
+            if (lines == null) 
+                return;
+
+            if ((ev.getModifiers() & ev.CTRL_MASK) != 0) {
+                data = SVG.read(lines);
+            } else {
+                try {
+                    data = lines
+                            .stream()
+                            .map(String::trim)
+                            .filter(((Predicate<String>)String::isEmpty).negate())
+                            .map(s -> Arrays.stream(s.split("\\s++",2)).mapToDouble(Double::parseDouble).toArray())
+                            .peek(a -> {if (a.length != 2) throw new NumberFormatException(Arrays.toString(a));})
+                            .flatMapToDouble(Arrays::stream)
+                            .toArray();
+                } catch (NumberFormatException ex) {
+                    JOptionPane.showMessageDialog(null, ex);
+                    return;
+                }
             }
         }
         
@@ -144,7 +153,7 @@ public class Circles extends AbstractTableModel {
         }
         fireTableDataChanged();
     }
-
+    
     private List<String> readLines(boolean shift) {
         List<String> lines;
         if (shift) {
