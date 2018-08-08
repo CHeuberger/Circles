@@ -5,20 +5,28 @@ import static java.util.stream.Collectors.*;
 
 import java.awt.Color;
 import java.awt.Graphics2D;
+import java.awt.Image;
 import java.awt.Toolkit;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.DataFlavor;
+import java.awt.datatransfer.StringSelection;
 import java.awt.datatransfer.UnsupportedFlavorException;
 import java.awt.event.ActionEvent;
 import java.awt.geom.Line2D;
 import java.awt.image.BufferedImage;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
 import java.util.function.Predicate;
 import java.util.prefs.Preferences;
+
+import javax.imageio.ImageIO;
 import javax.swing.ImageIcon;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
@@ -62,14 +70,22 @@ public class Circles extends AbstractTableModel {
     void doData(ActionEvent ev) {
         double[] data;
         if ((ev.getModifiers() & ev.ALT_MASK) != 0) {
-            DrawPanel panel = new DrawPanel(input);
+            Image image;
+            File file = chooseFile("Image", false);
+            try {
+                image = file==null ? null : ImageIO.read(file);
+            } catch (IOException ex) {
+                ex.printStackTrace();
+                JOptionPane.showMessageDialog(null, ex.toString());
+                return;
+            }
+            DrawPanel panel = new DrawPanel(input, image);
             if (JOptionPane.showConfirmDialog(null, panel, "Draw", JOptionPane.OK_CANCEL_OPTION) != JOptionPane.OK_OPTION) {
                 return;
             }
             data = panel.data();
-            System.out.println(Arrays.toString(data));
         } else {
-            List<String> lines = readLines((ev.getModifiers() & ev.SHIFT_MASK) != 0);
+            List<String> lines = readLines("Load Data", (ev.getModifiers() & ev.SHIFT_MASK) != 0);
             if (lines == null) 
                 return;
 
@@ -122,6 +138,32 @@ public class Circles extends AbstractTableModel {
         }
         fireTableDataChanged();
     }
+    
+    void doSave(ActionEvent ev) {
+        if (input == null)
+            return;
+        if ((ev.getModifiers() & ev.SHIFT_MASK) != 0) {
+            StringBuilder builder = new StringBuilder();
+            for (int i = 0; i < input.length-1; ) {
+                builder.append(String.format(Locale.ROOT, "%7.2f %7.2f%n", input[i++], input[i++]));
+            }
+            StringSelection data = new StringSelection(builder.toString());
+            Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+            clipboard.setContents(data, data);
+        } else {
+            File file = chooseFile("Write data", true);
+            if (file != null) {
+                try (BufferedWriter out = new BufferedWriter(new FileWriter(file))) {
+                    for (int i = 0; i < input.length-1; ) {
+                        out.append(String.format(Locale.ROOT, "%7.2f %7.2f%n", input[i++], input[i++]));
+                    }
+                } catch (IOException ex) {
+                    ex.printStackTrace();
+                    JOptionPane.showMessageDialog(null, ex.toString());
+                }
+            }
+        }
+    }
 
 /*
  0  0  0
@@ -134,7 +176,7 @@ public class Circles extends AbstractTableModel {
             return;
         }
         
-        List<String> lines = readLines((ev.getModifiers() & ev.SHIFT_MASK) != 0);
+        List<String> lines = readLines("Load Cicles", (ev.getModifiers() & ev.SHIFT_MASK) != 0);
         if (lines == null) 
             return;
 
@@ -154,7 +196,7 @@ public class Circles extends AbstractTableModel {
         fireTableDataChanged();
     }
     
-    private List<String> readLines(boolean shift) {
+    private List<String> readLines(String title, boolean shift) {
         List<String> lines;
         if (shift) {
             Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
@@ -170,18 +212,11 @@ public class Circles extends AbstractTableModel {
                 return null;
             lines = Arrays.stream(text.split("\\R",-1)).collect(toList());
         } else {
-            String dir = prefs.get(PREF_DIR, ".");
-            JFileChooser chooser = new JFileChooser(dir);
-            chooser.setAcceptAllFileFilterUsed(true);
-            chooser.setFileSelectionMode(chooser.FILES_ONLY);
-            chooser.setMultiSelectionEnabled(false);
-            if (chooser.showOpenDialog(null) != chooser.APPROVE_OPTION)
+            File file = chooseFile(title, false);
+            if (file == null) 
                 return null;
-
-            dir = chooser.getCurrentDirectory().getAbsolutePath();
-            prefs.put(PREF_DIR, dir);
             try {
-                lines = Files.readAllLines(chooser.getSelectedFile().toPath());
+                lines = Files.readAllLines(file.toPath());
             } catch (IOException ex) {
                 ex.printStackTrace();
                 JOptionPane.showMessageDialog(null, ex);
@@ -189,6 +224,22 @@ public class Circles extends AbstractTableModel {
             }
         }
         return lines;
+    }
+
+    private File chooseFile(String title, boolean save) {
+        String dir = prefs.get(PREF_DIR, ".");
+        JFileChooser chooser = new JFileChooser(dir);
+        chooser.setAcceptAllFileFilterUsed(true);
+        chooser.setDialogTitle(title);
+        chooser.setFileSelectionMode(chooser.FILES_ONLY);
+        chooser.setMultiSelectionEnabled(false);
+        int opt = save ? chooser.showSaveDialog(null) : chooser.showOpenDialog(null);
+        if (opt != chooser.APPROVE_OPTION)
+            return null;
+
+        dir = chooser.getCurrentDirectory().getAbsolutePath();
+        prefs.put(PREF_DIR, dir);
+        return chooser.getSelectedFile();
     }
 
     private void special() {

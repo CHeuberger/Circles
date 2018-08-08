@@ -40,6 +40,10 @@ public class Main {
         data.setToolTipText("Load data from file");
         data.addActionListener(circles::doData);
         
+        JButton save = new JButton("Save");
+        save.setToolTipText("Save data to file");
+        save.addActionListener(circles::doSave);
+        
         JButton start = new JButton("Start");
         start.setToolTipText("Start/Stop animation");
         start.addActionListener(panel::doStartStop);
@@ -75,6 +79,7 @@ public class Main {
         Box buttons = Box.createHorizontalBox();
         buttons.add(Box.createHorizontalStrut(20));
         buttons.add(data);
+        buttons.add(save);
         buttons.add(Box.createHorizontalGlue());
         buttons.add(start);
         buttons.add(step);
