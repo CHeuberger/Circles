@@ -37,11 +37,11 @@ public class Main {
         table.setPreferredScrollableViewportSize(new Dimension(200, 400));
         
         JButton data = new JButton("Data");
-        data.setToolTipText("Load data from file");
+        data.setToolTipText("Load point data from file; ALT: load image and select points");
         data.addActionListener(circles::doData);
         
         JButton save = new JButton("Save");
-        save.setToolTipText("Save data to file");
+        save.setToolTipText("Save data to file; SHFT: to clipboard");
         save.addActionListener(circles::doSave);
         
         JButton start = new JButton("Start");
@@ -61,11 +61,11 @@ public class Main {
         in.addActionListener(ev -> panel.zoom(1/0.75));
         
         JButton clear = new JButton("Clear");
-        clear.setToolTipText("Clear");
+        clear.setToolTipText("Clear point data");
         clear.addActionListener(panel::doClear);
         
         JButton load = new JButton("Load");
-        load.setToolTipText("Load circles from file");
+        load.setToolTipText("Load circles from file; SHFT: from clipboard; CTRL: show FFT graph");
         load.addActionListener(circles::doLoad);
         
         JButton add = new JButton("Add");

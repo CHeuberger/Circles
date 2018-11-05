@@ -34,8 +34,9 @@ public class DrawPanel extends JPanel {
         }
         this.image = image;
         
-        setPreferredSize(new Dimension(2*HALF, 2*HALF));
         setCursor(Cursor.getPredefinedCursor(Cursor.CROSSHAIR_CURSOR));
+        setPreferredSize(new Dimension(2*HALF, 2*HALF));
+        setToolTipText("<html>LEFT: add point to end; CTRL: split<br/>RIGHT: remove last; CTRL: remove next</html>"); 
 
         MouseAdapter mouseListener = new MouseAdapter() {
             private Point drag = null;

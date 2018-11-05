@@ -285,7 +285,7 @@ public class Circles extends AbstractTableModel {
                 gg.draw(l2);
             }
         }
-//        JOptionPane.showMessageDialog(null, new ImageIcon(img));
+        JOptionPane.showMessageDialog(null, new ImageIcon(img));
         
         DoubleFFT_1D fft = new DoubleFFT_1D(N);
         fft.complexForward(points);
