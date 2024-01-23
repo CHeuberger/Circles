@@ -102,6 +102,7 @@ public class Circles extends AbstractTableModel {
                             .flatMapToDouble(Arrays::stream)
                             .toArray();
                 } catch (NumberFormatException ex) {
+                    ex.printStackTrace();
                     JOptionPane.showMessageDialog(null, ex);
                     return;
                 }
@@ -187,9 +188,10 @@ public class Circles extends AbstractTableModel {
             .map(String::trim)
             .filter(((Predicate<String>)String::isEmpty).negate())
             .map(s -> Arrays.stream(s.split("\\s++",3)).mapToDouble(Double::parseDouble).toArray())
-            .peek(a -> {if (a.length != 3) throw new NumberFormatException(Arrays.toString(a));})
+            .peek(a -> {if (a.length != 3) throw new IllegalArgumentException(Arrays.toString(a));})
             .forEach(circles::add);
-        } catch (NumberFormatException ex) {
+        } catch (Exception ex) {
+            ex.printStackTrace();
             JOptionPane.showMessageDialog(null, ex);
             return;
         }
@@ -204,8 +206,8 @@ public class Circles extends AbstractTableModel {
             try {
                 text = String.valueOf(clipboard.getData(DataFlavor.stringFlavor));
             } catch (UnsupportedFlavorException | IOException ex) {
-                JOptionPane.showMessageDialog(null, ex);
                 ex.printStackTrace();
+                JOptionPane.showMessageDialog(null, ex);
                 return null;
             }
             if (text.equals("null") || text.isEmpty())
